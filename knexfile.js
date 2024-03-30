@@ -9,9 +9,9 @@ module.exports = {
     connection: {
       host : '127.0.0.1',
       port : 5432,
-      database : 'pancingan',
-      user : 'andika',
-      password : '123456',
+      database : 'Pancinganv2',
+      user : 'postgres',
+      password : '1234567',
     },
     pool: {
       min: 2,
