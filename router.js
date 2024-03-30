@@ -4,7 +4,7 @@ const DB = require('./services/db.js');
 app.group("/api/v1",() =>{
     app.get("/blogs", async (req,res)=>{
         try{
-            let data = await DB.from('blog').select(['title','slug','description']).orderBy('id','desc');
+            let data = await DB.from('blog').select(['title','slug','description','image']).orderBy('id','desc');
             let resp = {code:200,message:'ok',data}
             return res.json(resp).status(200);
         }catch(e){
@@ -75,4 +75,5 @@ app.group("/api/v1",() =>{
     })
 })
 
-module.exports = app.router
+
+module.exports = app.router;
