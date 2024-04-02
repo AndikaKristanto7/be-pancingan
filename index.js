@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
+require('dotenv').config()
 const router = require('./router.js')
+const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : process.env.PROD_DEV
 app.use(function (req, res, next) {
 
     
@@ -27,6 +29,6 @@ app.use(router)
 // Add headers before the routes are defined
 
 
-app.listen(3000,() => {
-    console.log("Listening @ port 3000")
+app.listen(port,() => {
+    console.log(`Listening @ port ${port}`)
 })

@@ -7,11 +7,11 @@ module.exports = {
   development: {
     client: 'pg',
     connection: {
-      host : '127.0.0.1',
-      port : 5432,
-      database : 'Pancinganv2',
-      user : 'postgres',
-      password : '1234567',
+      host : process.env.HOST,
+      port : process.env.PORT,
+      database : process.env.DB,
+      user : process.env.USER,
+      password : process.env.PASS,
     },
     pool: {
       min: 2,
