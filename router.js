@@ -4,13 +4,43 @@ const DB = require('./services/db.js');
 app.group("/api/v1",() =>{
     app.get("/blogs", async (req,res)=>{
         try{
-            let data = await DB.from('blog').select(['title','slug','description','image']).orderBy('id','desc');
-            let resp = {code:200,message:'ok',data}
+            // Pagination parameters
+            const page = parseInt(req.query.page) || 1;
+            const pageSize = parseInt(req.query.pageSize) || 10;
+            const offset = (page - 1) * pageSize;
+
+            // Get paginated list of blogs
+            let data = await DB.from('blogs')
+                                .select(['title','slug','description','image','id'])
+                                .orderBy('id','desc')
+                                .offset(offset)
+                                .limit(pageSize);
+            
+            // Get total count of blogs
+            const totalCount = await DB.from('blogs').count('* as total').first();
+
+            let resp = {
+                code:200,
+                message:'ok',
+                data,
+                pagination: {
+                    page,
+                    pageSize,
+                    total: parseInt(totalCount.total),
+                    totalPages: Math.ceil(parseInt(totalCount.total) / pageSize)
+                }
+            }
             return res.json(resp).status(200);
-        }catch(e){
-            let resp = {code:500,message:e.getMessage(),data:null}
+        } catch(e) {
+            console.log(e)
+            let resp = {
+                code:500,
+                //message:e.getMessage(),
+                data:null
+            }
             return res.json(resp).status(500);
         }
+        
         
     })
     
@@ -74,6 +104,7 @@ app.group("/api/v1",() =>{
         
     })
 })
+
 
 
 module.exports = app.router;
