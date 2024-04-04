@@ -103,6 +103,39 @@ app.group("/api/v1",() =>{
         }
         
     })
+    //API LOGIN
+
+    app.post("/login", async (req,res)=>{
+        let body = req.body
+        try{
+            let user = await DB.from('users').select("uuid", "role").where({email:body.email}).first();
+            let uuid;
+            if(typeof user !== "object"){
+                user = await DB('users').insert({...body,role:'user'}).returning(['uuid'])
+                uuid = user[0].uuid
+            } else {
+                uuid = user.uuid
+            }
+            return res.json(
+                {
+                    code:200,
+                    message:'ok',
+                    data:
+                    {
+                        uuid : uuid,
+                        ...body,
+                        role: 'user'
+                    },
+                }).status(200)
+        }catch(e){
+            return res.status(e.status || 500).json(
+                {
+                    code:e.status || 500,
+                    message:e.msg || e.message,
+                    data: null,
+                })
+        }
+    })
 })
 
 
