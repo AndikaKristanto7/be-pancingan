@@ -73,14 +73,26 @@ app.group("/api/v1",() =>{
     })
 
     app.get("/blog/:slug", async (req,res)=>{
+    //     let slug = req.params.slug
+    //     try{
+    //         const blog = await DB.from('blog').select("*").where({slug:slug}).first()
+    //         return res.json({code:200,message:'ok',data:blog}).status(200)
+    //     }catch(e){
+    //         return res.json({code:500,message:e.message,data:null}).status(500)
+    //     }
+        
+    // })
+    
         let slug = req.params.slug
         try{
-            const blog = await DB.from('blog').select("*").where({slug:slug}).first()
+            const blog = await DB.from('blogs').select("*").where({slug:slug}).first()
+            if (!blog) {
+                return res.status(404).json({code:404,message:`Blog dengan slug ${slug} tidak ditemukan`,data:null})
+            }
             return res.json({code:200,message:'ok',data:blog}).status(200)
-        }catch(e){
+        } catch(e) {
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
-        
     })
     
 
