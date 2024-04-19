@@ -66,7 +66,11 @@ app.group("/api/v1",() =>{
                     data:
                     {
                         id : blog[0].id,
-                        ...body
+                        title,
+                        slug,
+                        location,
+                        image,
+                        description
                     },
                 }).status(200)
         }catch(e){
