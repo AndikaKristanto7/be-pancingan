@@ -105,9 +105,10 @@ app.group("/api/v1",() =>{
 
     app.put("/blog/:slug", async (req,res)=>{
         let body = req.body;
+        const {title, slug, location, image, email, description} = body
         try{
-            await DB.from('blogs').where({slug:req.params.slug}).update(body);       
-            return res.json({code:200,message:'ok',data:{slug:req.params.slug,...body}}).status(200)
+            await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description});       
+            return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
         }catch(e){
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
@@ -126,10 +127,14 @@ app.group("/api/v1",() =>{
 
     app.post("/login", async (req,res)=>{
         let body = req.body
+        
         try{
+            let role;
             let user = await DB.from('users').select("role").where({email:body.email}).first();
+            role = user.role
             if(typeof user !== "object"){
                 user = await DB('users').insert({...body,role:'user'})
+                role = "user";                
             }
             return res.json(
                 {
@@ -138,7 +143,7 @@ app.group("/api/v1",() =>{
                     data:
                     {
                         ...body,
-                        role: 'user'
+                        role
                     },
                 }).status(200)
         }catch(e){
