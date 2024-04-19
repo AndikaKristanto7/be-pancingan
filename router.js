@@ -46,12 +46,19 @@ app.group("/api/v1",() =>{
     
     app.post("/blog", async (req,res)=>{
         let body = req.body
+        const {title, slug, location, image, email, description} = body
         try{
             let findExistingBlogBySlug = await DB.from('blogs').select("id").where({slug:body.slug}).first();
             if(typeof findExistingBlogBySlug == "object"){
                 throw {msg:'Slug existed!',status:400}
             }
-            let blog = await DB('blogs').insert(body).returning(['id'])
+            let blog = await DB('blogs').insert({
+                title,
+                slug,
+                location,
+                image,
+                description
+            }).returning(['id'])
             return res.json(
                 {
                     code:200,
@@ -120,13 +127,9 @@ app.group("/api/v1",() =>{
     app.post("/login", async (req,res)=>{
         let body = req.body
         try{
-            let user = await DB.from('users').select("uuid", "role").where({email:body.email}).first();
-            let uuid;
+            let user = await DB.from('users').select("role").where({email:body.email}).first();
             if(typeof user !== "object"){
-                user = await DB('users').insert({...body,role:'user'}).returning(['uuid'])
-                uuid = user[0].uuid
-            } else {
-                uuid = user.uuid
+                user = await DB('users').insert({...body,role:'user'})
             }
             return res.json(
                 {
@@ -134,7 +137,6 @@ app.group("/api/v1",() =>{
                     message:'ok',
                     data:
                     {
-                        uuid : uuid,
                         ...body,
                         role: 'user'
                     },
