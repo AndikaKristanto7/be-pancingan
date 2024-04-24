@@ -54,12 +54,19 @@ app.group("/api/v1",() =>{
     
     app.post("/blog", async (req,res)=>{
         let body = req.body
+        const {title, slug, location, image, email, description} = body
         try{
-            let findExistingBlogBySlug = await DB.from('blog').select("id").where({slug:body.slug}).first();
+            let findExistingBlogBySlug = await DB.from('blogs').select("id").where({slug:body.slug}).first();
             if(typeof findExistingBlogBySlug == "object"){
                 throw {msg:'Slug existed!',status:400}
             }
-            let blog = await DB('blog').insert(body).returning(['id'])
+            let blog = await DB('blogs').insert({
+                title,
+                slug,
+                location,
+                image,
+                description
+            }).returning(['id'])
             return res.json(
                 {
                     code:200,
@@ -67,7 +74,11 @@ app.group("/api/v1",() =>{
                     data:
                     {
                         id : blog[0].id,
-                        ...body
+                        title,
+                        slug,
+                        location,
+                        image,
+                        description
                     },
                 }).status(200)
         }catch(e){
@@ -81,21 +92,34 @@ app.group("/api/v1",() =>{
     })
 
     app.get("/blog/:slug", async (req,res)=>{
+    //     let slug = req.params.slug
+    //     try{
+    //         const blog = await DB.from('blog').select("*").where({slug:slug}).first()
+    //         return res.json({code:200,message:'ok',data:blog}).status(200)
+    //     }catch(e){
+    //         return res.json({code:500,message:e.message,data:null}).status(500)
+    //     }
+        
+    // })
+    
         let slug = req.params.slug
         try{
-            const blog = await DB.from('blog').select("*").where({slug:slug}).first()
+            const blog = await DB.from('blogs').select("*").where({slug:slug}).first()
+            if (!blog) {
+                return res.status(404).json({code:404,message:`Blog dengan slug ${slug} tidak ditemukan`,data:null})
+            }
             return res.json({code:200,message:'ok',data:blog}).status(200)
-        }catch(e){
+        } catch(e) {
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
-        
     })
     
     app.put("/blog/:slug", async (req,res)=>{
         let body = req.body;
+        const {title, slug, location, image, email, description} = body
         try{
-            await DB.from('blog').where({slug:req.params.slug}).update(body);       
-            return res.json({code:200,message:'ok',data:{slug:req.params.slug,...body}}).status(200)
+            await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description});       
+            return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
         }catch(e){
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
@@ -103,7 +127,7 @@ app.group("/api/v1",() =>{
     
     app.delete("/blog/:slug", async (req,res)=>{
         try{
-            await DB.from('blog').where({slug:req.params.slug}).delete()
+            await DB.from('blogs').where({slug:req.params.slug}).delete()
             return res.json({code:200,message:`Data blog dengan slug ${req.params.slug} berhasil di delete`}).status(200)
         }catch(e){
             return res.json({message:e.message}).status(500)
@@ -115,13 +139,12 @@ app.group("/api/v1",() =>{
         let body = req.body
         
         try{
-            let user = await DB.from('users').select("uuid", "role").where({email:body.email}).first();
-            let uuid;
+            let role;
+            let user = await DB.from('users').select("role").where({email:body.email}).first();
+            role = user.role
             if(typeof user !== "object"){
-                user = await DB('users').insert({...body,role:'user'}).returning(['uuid'])
-                uuid = user[0].uuid
-            } else {
-                uuid = user.uuid
+                user = await DB('users').insert({...body,role:'user'})
+                role = "user";                
             }
             const token =jwt.sign({email:res.email}, secretKey, {expiresIn: "30m"});
             return res.json(
@@ -130,7 +153,6 @@ app.group("/api/v1",() =>{
                     message:'ok',
                     data:
                     {
-                        uuid : uuid,
                         ...body,
                         role: 'user',
                         token
