@@ -9,6 +9,7 @@ const secretKey = process.env.SECRET;
 //     res.json({ message: 'Protected data' });
 //   });
 
+
 app.group("/api/v1",() =>{
     app.get("/blogs", async (req,res)=>{
         try{
@@ -178,9 +179,6 @@ app.group("/api/v1",() =>{
             res.send(err)
         } 
       }
-
 })
-
-
 
 module.exports = app.router;
