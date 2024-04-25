@@ -1,5 +1,13 @@
 var app = require("@forkjs/group-router");
 const DB = require('./services/db.js');
+const jwt = require('jsonwebtoken')
+
+// JWT
+const secretKey = process.env.SECRET;
+
+// app.get('/', (req, res) => {
+//     res.json({ message: 'Protected data' });
+//   });
 
 app.group("/api/v1",() =>{
     app.get("/blogs", async (req,res)=>{
@@ -106,7 +114,6 @@ app.group("/api/v1",() =>{
         }
     })
     
-
     app.put("/blog/:slug", async (req,res)=>{
         let body = req.body;
         const {title, slug, location, image, email, description} = body
@@ -128,8 +135,7 @@ app.group("/api/v1",() =>{
         
     })
     //API LOGIN
-
-    app.post("/login", async (req,res)=>{
+    app.post("/login", authenticateToken, async (req,res)=>{
         let body = req.body
         
         try{
@@ -140,6 +146,7 @@ app.group("/api/v1",() =>{
                 user = await DB('users').insert({...body,role:'user'})
                 role = "user";                
             }
+            const token =jwt.sign({email:res.email}, secretKey, {expiresIn: "30m"});
             return res.json(
                 {
                     code:200,
@@ -147,7 +154,8 @@ app.group("/api/v1",() =>{
                     data:
                     {
                         ...body,
-                        role
+                        role: 'user',
+                        token
                     },
                 }).status(200)
         }catch(e){
@@ -158,7 +166,19 @@ app.group("/api/v1",() =>{
                     data: null,
                 })
         }
+
     })
+    function authenticateToken(req, res, next) {
+        try {
+            const decoded = jwt.verify(token, secretKey);  
+            req.user = decoded;
+            next(); 
+        } catch(err) {
+            console.log('JWT verification failed', err);
+            res.send(err)
+        } 
+      }
+
 })
 
 
