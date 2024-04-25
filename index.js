@@ -7,17 +7,11 @@ const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : proce
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require("path");
 
-const storage = multer.diskStorage({
-    destination: function (req, file, callback) {
-        callback(null, './uploads')
-    },
-    filename: function (req, file, callback) {
-        callback(null, file.originalname)
-    }
-});
+// const storage = multer({ dest: 'uploads/' })
 
-const upload = multer({ storage: storage });
+const upload = multer({ dest: 'uploads/' })
 
 cloudinary.config({
     cloud_name: 'dhjpdj4ru',
@@ -57,13 +51,12 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture
     app.post('/picture', upload.single('file'), async (req, res) => {
-        console.dir(JSON.stringify(req.body.file))
-        console.log(req);
-        const url = await uploadCloudinary(req.body.file.path);
-
+        const url = await uploadCloudinary(req.file.path);
 
         if (url) {
             return res.json({
@@ -76,9 +69,6 @@ app.use(function (req, res, next) {
             });
         }
     });
-
-app.use(express.json())
-
 app.use(router)
 // Add headers before the routes are defined
 
