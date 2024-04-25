@@ -84,15 +84,6 @@ app.group("/api/v1",() =>{
     })
 
     app.get("/blog/:slug", async (req,res)=>{
-    //     let slug = req.params.slug
-    //     try{
-    //         const blog = await DB.from('blog').select("*").where({slug:slug}).first()
-    //         return res.json({code:200,message:'ok',data:blog}).status(200)
-    //     }catch(e){
-    //         return res.json({code:500,message:e.message,data:null}).status(500)
-    //     }
-        
-    // })
     
         let slug = req.params.slug
         try{
@@ -135,10 +126,11 @@ app.group("/api/v1",() =>{
         try{
             let role;
             let user = await DB.from('users').select("role").where({email:body.email}).first();
-            role = user.role
             if(typeof user !== "object"){
                 user = await DB('users').insert({...body,role:'user'})
                 role = "user";                
+            }else{
+                role = user.role
             }
             return res.json(
                 {
