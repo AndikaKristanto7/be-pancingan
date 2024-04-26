@@ -11,29 +11,78 @@ const secretKey = process.env.SECRET;
 
 
 app.group("/api/v1",() =>{
-    app.get("/blogs", async (req,res)=>{
-        try{
-            // Pagination parameters
-            const page = parseInt(req.query.page) || 1;
-            const pageSize = parseInt(req.query.pageSize) || 10;
-            const offset = (page - 1) * pageSize;
-
-            // Get paginated list of blogs
-            let data = await DB.from('blogs')
+    async function getPublishedBlogs(offset,pageSize){
+        let data = await DB.from('blogs')
                                 .select(['title','slug','description','image','id'])
                                 .orderBy('id','desc')
                                 .whereRaw('deleted_at IS NULL')
                                 .where('is_published','Y')
                                 .offset(offset)
                                 .limit(pageSize);
-            
-            // Get total count of blogs
-            const totalCount = await DB.from('blogs')
-                                        .count('* as total')
-                                        .whereRaw('deleted_at IS NULL')
-                                        .where('is_published','Y')
-                                        .first();
 
+        const totalCount = await DB.from('blogs')
+                                    .count('* as total')
+                                    .whereRaw('deleted_at IS NULL')
+                                    .where('is_published','Y')
+                                    .first();
+        return {data,totalCount}
+    }
+
+    async function getUnpublishedBlogs(offset,pageSize){
+        let data = await DB.from('blogs')
+                .select(['title','slug','description','image','id'])
+                .orderBy('id','desc')
+                .whereRaw('deleted_at IS NULL')
+                .where('is_published','N')
+                .offset(offset)
+                .limit(pageSize);
+
+        const totalCount = await DB.from('blogs')
+                    .count('* as total')
+                    .whereRaw('deleted_at IS NULL')
+                    .where('is_published','N')
+                    .first();
+        return {data,totalCount}
+    }
+
+    async function getBlogsByEmail(email,offset,pageSize){
+        let data = await DB.from('blogs')
+                .join('users','blogs.user_id','users.id')
+                .select(['title','slug','description','image','blogs.id'])
+                .orderBy('blogs.id','desc')
+                .where('email',email)
+                .offset(offset)
+                .limit(pageSize);
+
+        const totalCount = await DB.from('blogs')
+                    .join('users','blogs.user_id','users.id')
+                    .where('email',email)
+                    .count("* as total")
+                    .first();
+        return {data,totalCount}
+    }
+
+    app.get("/blogs", async (req,res)=>{
+        try{
+            // Pagination parameters
+            const page = parseInt(req.query.page) || 1;
+            const pageSize = parseInt(req.query.pageSize) || 10;
+            const offset = (page - 1) * pageSize;
+            const unpublished = req.query.unpublished ?? false
+            const email = req.query.email ?? false
+            let result
+            let data;
+            let totalCount
+            // Get paginated list of blogs
+            if(email){
+                result = await getBlogsByEmail(email,offset, pageSize)
+            }else if(unpublished){
+                result = await getUnpublishedBlogs(offset,pageSize)
+            }else{
+                result = await getPublishedBlogs(offset,pageSize)
+            }
+            data = result.data
+            totalCount = result.totalCount
             let resp = {
                 code:200,
                 message:'ok',
