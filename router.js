@@ -28,7 +28,11 @@ app.group("/api/v1",() =>{
                                 .limit(pageSize);
             
             // Get total count of blogs
-            const totalCount = await DB.from('blogs').count('* as total').first();
+            const totalCount = await DB.from('blogs')
+                                        .count('* as total')
+                                        .whereRaw('deleted_at IS NULL')
+                                        .where('is_published','Y')
+                                        .first();
 
             let resp = {
                 code:200,
@@ -115,8 +119,18 @@ app.group("/api/v1",() =>{
         let body = req.body;
         const {title, slug, location, image, email, description} = body
         try{
-            await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description});       
+            await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description,is_published:'N'});       
             return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
+        }catch(e){
+            return res.json({code:500,message:e.message,data:null}).status(500)
+        }
+    })
+
+    app.put("/blog/publish/:slug", async (req,res)=>{
+        let body = req.body;
+        try{
+            await DB.from('blogs').where({slug:req.params.slug}).update('is_published','Y');       
+            return res.json({code:200,message:`Blog with slug : ${req.params.slug} published!`}).status(200)
         }catch(e){
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
