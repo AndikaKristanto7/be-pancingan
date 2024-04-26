@@ -22,6 +22,8 @@ app.group("/api/v1",() =>{
             let data = await DB.from('blogs')
                                 .select(['title','slug','description','image','id'])
                                 .orderBy('id','desc')
+                                .whereRaw('deleted_at IS NULL')
+                                .where('is_published','Y')
                                 .offset(offset)
                                 .limit(pageSize);
             
@@ -122,7 +124,7 @@ app.group("/api/v1",() =>{
     
     app.delete("/blog/:slug", async (req,res)=>{
         try{
-            await DB.from('blogs').where({slug:req.params.slug}).delete()
+            await DB.from('blogs').where({slug:req.params.slug}).update({'deleted_at':new Date().toISOString()})
             return res.json({code:200,message:`Data blog dengan slug ${req.params.slug} berhasil di delete`}).status(200)
         }catch(e){
             return res.json({message:e.message}).status(500)
