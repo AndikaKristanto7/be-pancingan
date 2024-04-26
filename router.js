@@ -92,10 +92,13 @@ app.group("/api/v1",() =>{
     })
 
     app.get("/blog/:slug", async (req,res)=>{
-    
         let slug = req.params.slug
         try{
-            const blog = await DB.from('blogs').select("*").where({slug:slug}).first()
+            const blog = await DB.from('blogs')
+                                .join('users','blogs.user_id','users.id')
+                                .select(['slug','title','description','location','image','blogs.created_at','email','role'])
+                                .where({slug:slug})
+                                .first()
             if (!blog) {
                 return res.status(404).json({code:404,message:`Blog dengan slug ${slug} tidak ditemukan`,data:null})
             }
