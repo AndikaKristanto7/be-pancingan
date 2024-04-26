@@ -152,7 +152,7 @@ app.group("/api/v1",() =>{
                     data:
                     {
                         ...body,
-                        role: 'user',
+                        role,
                         token
                     },
                 }).status(200)
