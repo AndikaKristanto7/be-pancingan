@@ -45,32 +45,59 @@ app.group("/api/v1",() =>{
     })
     
     app.post("/blog", async (req,res)=>{
-        let body = req.body
-        try{
-            let findExistingBlogBySlug = await DB.from('blog').select("id").where({slug:body.slug}).first();
-            if(typeof findExistingBlogBySlug == "object"){
-                throw {msg:'Slug existed!',status:400}
-            }
-            let blog = await DB('blog').insert(body).returning(['id'])
-            return res.json(
-                {
-                    code:200,
-                    message:'ok',
-                    data:
-                    {
-                        id : blog[0].id,
-                        ...body
-                    },
-                }).status(200)
-        }catch(e){
-            return res.status(e.status || 500).json(
-                {
-                    code:e.status || 500,
-                    message:e.msg || e.message,
-                    data: null,
-                })
+        let body = req.body;
+        
+        // Validasi input
+        const { title, slug, location, image, email, description } = body;
+    try {
+        // Validasi input
+        if (!title || !slug || !description || !image || !email) {
+            throw {msg: 'All fields are required', status: 400};
         }
-    })
+
+        // Periksa apakah pengguna dengan alamat email tersebut ada
+        const user = await DB.from('users').select("id").where({email}).first();
+        if (!user) {
+            throw {msg: 'User with that email not found', status: 403};
+        }
+
+        // Periksa apakah slug sudah ada dalam database
+        const existingBlog = await DB.from('blogs').select("id").where({slug}).first();
+        if(existingBlog) {
+            throw {msg:'Slug already exists!', status: 400};
+        }
+
+        // Buat blog baru dengan slug yang unik dan user_id yang sesuai
+        const newBlog = await DB('blogs').insert({
+            title,
+            slug,
+            location,
+            image,
+            description,
+            user_id: user.id
+        }).returning(['id']);
+
+        return res.status(201).json({
+            code: 201,
+            message: 'Blog successfully created',
+            data: {
+                id: newBlog[0].id,
+                title,
+                slug,
+                location,
+                image,
+                description
+            },
+            location: `/api/v1/blog/${slug}`
+        });
+    } catch(e) {
+        return res.status(e.status || 500).json({
+            code: e.status || 500,
+            message: e.msg || e.message,
+            data: null
+        });
+    }
+});
 
     app.get("/blog/:slug", async (req,res)=>{
     //     let slug = req.params.slug
