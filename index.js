@@ -3,6 +3,9 @@ const app = express()
 require('dotenv').config()
 const router = require('./router.js')
 const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : process.env.PROD_DEV
+const jwt = require('jsonwebtoken')
+
+const secretKey = process.env.SECRET;
 
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -31,6 +34,29 @@ async function uploadCloudinary(filePath) {
     }        
 }
 
+function authenticateToken(req, res, next) {
+    if (req.method === 'GET') {
+        // If it's a GET request, skip token verification and move to the next middleware
+        next();
+        return;
+    }else if (req.path === '/api/v1/login') {
+        next();
+        return;
+    }
+    
+    const token = req.headers.token;
+    try {
+        const decoded = jwt.verify(token, secretKey);  
+        req.user = decoded;
+        console.log(token)
+        next(); 
+    } catch(err) {
+        console.log('JWT verification failed', err);
+        res.send(err)
+    }
+  }
+
+
 app.use(function (req, res, next) {
 
     
@@ -52,6 +78,7 @@ app.use(function (req, res, next) {
 });
 
 app.use(express.json())
+app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture
