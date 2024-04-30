@@ -6,6 +6,34 @@ const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : proce
 const jwt = require('jsonwebtoken')
 
 const secretKey = process.env.SECRET;
+
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const path = require("path");
+
+// const storage = multer({ dest: 'uploads/' })
+
+const upload = multer({ dest: 'uploads/' })
+
+cloudinary.config({
+    cloud_name: 'dhjpdj4ru',
+    api_key: '569671138772217',
+    api_secret: 'aEuMEJ-wWMHr_isys4a4ldcVPvw',
+});
+
+async function uploadCloudinary(filePath) {
+    let result;
+    try {
+        result = await cloudinary.uploader.upload(filePath, {use_filename: true});
+        fs.unlinkSync(filePath);
+        return result.url;
+    } catch (err) {
+        fs.unlinkSync(filePath);
+        return null;
+    }        
+}
+
 function authenticateToken(req, res, next) {
     if (req.method === 'GET') {
         // If it's a GET request, skip token verification and move to the next middleware
@@ -27,6 +55,8 @@ function authenticateToken(req, res, next) {
         res.send(err)
     }
   }
+
+
 app.use(function (req, res, next) {
 
     
@@ -49,6 +79,23 @@ app.use(function (req, res, next) {
 
 app.use(express.json())
 app.use(authenticateToken)
+app.use(express.urlencoded({ extended: true }));
+//API Upload Pictures
+    //Upload Picture
+    app.post('/picture', upload.single('file'), async (req, res) => {
+        const url = await uploadCloudinary(req.file.path);
+
+        if (url) {
+            return res.json({
+                message: 'Upload success',
+                url: url,
+            });
+        } else {
+            return res.json({
+                message: 'Upload failed'
+            });
+        }
+    });
 app.use(router)
 // Add headers before the routes are defined
 
