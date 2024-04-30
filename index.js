@@ -11,6 +11,7 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const path = require("path");
+const cors = require('cors')
 
 // const storage = multer({ dest: 'uploads/' })
 
@@ -43,12 +44,14 @@ function authenticateToken(req, res, next) {
         next();
         return;
     }
-    
-    const token = req.headers.token;
+    if (!req.headers.authorization) {
+        return res.status(403).send({ error: 'No credentials sent!' });
+    }
+    let token = req.headers.authorization;
+    token = token.split(" ")
     try {
-        const decoded = jwt.verify(token, secretKey);  
+        const decoded = jwt.verify(token[1], secretKey);  
         req.user = decoded;
-        console.log(token)
         next(); 
     } catch(err) {
         console.log('JWT verification failed', err);
@@ -67,7 +70,7 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 
     // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type,authorization');
 
     // Set to true if you need the website to include cookies in the requests sent
     // to the API (e.g. in case you use sessions)
@@ -77,8 +80,9 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use(express.json())
+app.use(cors())
 app.use(authenticateToken)
+app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture

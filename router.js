@@ -59,7 +59,6 @@ app.group("/api/v1",() =>{
 
     app.get("/blogs", async (req,res)=>{
         try{
-            console.log(req.user)
             // Pagination parameters
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.pageSize) || 10;
@@ -108,15 +107,15 @@ app.group("/api/v1",() =>{
         let body = req.body;
         
         // Validasi input
-        const { title, slug, location, image, email, description } = body;
+        const { title, slug, location, image, description } = body;
     try {
         // Validasi input
-        if (!title || !slug || !description || !image || !email) {
+        if (!title || !slug || !description || !image) {
             throw {msg: 'All fields are required', status: 400};
         }
 
         // Periksa apakah pengguna dengan alamat email tersebut ada
-        const user = await DB.from('users').select("id").where({email}).first();
+        const user = await DB.from('users').select("id").where({email:req.user.email}).first();
         if (!user) {
             throw {msg: 'User with that email not found', status: 403};
         }
@@ -178,7 +177,11 @@ app.group("/api/v1",() =>{
     
     app.put("/blog/:slug", async (req,res)=>{
         let body = req.body;
-        const {title, slug, location, image, email, description} = body
+        const {title, slug, location, image, description} = body
+        const user = await DB.from('users').select("id").where({email:req.user.email}).first();
+        if (!user) {
+            throw {msg: 'User with that email not found', status: 403};
+        }
         try{
             await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description,is_published:'N'});       
             return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
@@ -189,6 +192,10 @@ app.group("/api/v1",() =>{
 
     app.put("/blog/publish/:slug", async (req,res)=>{
         let body = req.body;
+        const user = await DB.from('users').select("id").where({email:req.user.email}).first();
+        if (!user) {
+            throw {msg: 'User with that email not found', status: 403};
+        }
         try{
             await DB.from('blogs').where({slug:req.params.slug}).update('is_published','Y');       
             return res.json({code:200,message:`Blog with slug : ${req.params.slug} published!`}).status(200)
@@ -198,6 +205,10 @@ app.group("/api/v1",() =>{
     })
     
     app.delete("/blog/:slug", async (req,res)=>{
+        const user = await DB.from('users').select("id").where({email:req.user.email}).first();
+        if (!user) {
+            throw {msg: 'User with that email not found', status: 403};
+        }
         try{
             await DB.from('blogs').where({slug:req.params.slug}).update({'deleted_at':new Date().toISOString()})
             return res.json({code:200,message:`Data blog dengan slug ${req.params.slug} berhasil di delete`}).status(200)
@@ -219,9 +230,7 @@ app.group("/api/v1",() =>{
             }else{
                 role = user.role
             }
-            const token =jwt.sign({email:req.body.email}, secretKey, {expiresIn: "30m"});
-            const decoded = jwt.verify(token, secretKey);
-            console.log(decoded)
+            const token =jwt.sign({email:req.body.email}, secretKey, {expiresIn: 30 * 1000 * 60 });
             return res.json(
                 {
                     code:200,
