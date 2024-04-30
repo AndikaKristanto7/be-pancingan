@@ -163,7 +163,7 @@ app.group("/api/v1",() =>{
         try{
             const blog = await DB.from('blogs')
                                 .join('users','blogs.user_id','users.id')
-                                .select(['slug','title','description','location','image','blogs.created_at','email','role','is_published'])
+                                .select(['slug','title','description','location','image','blogs.created_at','name','email','role','is_published'])
                                 .where({slug:slug})
                                 .first()
             if (!blog) {
