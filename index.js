@@ -3,6 +3,63 @@ const app = express()
 require('dotenv').config()
 const router = require('./router.js')
 const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : process.env.PROD_DEV
+const jwt = require('jsonwebtoken')
+
+const secretKey = process.env.SECRET;
+
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const path = require("path");
+const cors = require('cors')
+
+// const storage = multer({ dest: 'uploads/' })
+
+const upload = multer({ dest: 'uploads/' })
+
+cloudinary.config({
+    cloud_name: 'dhjpdj4ru',
+    api_key: '569671138772217',
+    api_secret: 'aEuMEJ-wWMHr_isys4a4ldcVPvw',
+});
+
+async function uploadCloudinary(filePath) {
+    let result;
+    try {
+        result = await cloudinary.uploader.upload(filePath, {use_filename: true});
+        fs.unlinkSync(filePath);
+        return result.url;
+    } catch (err) {
+        fs.unlinkSync(filePath);
+        return null;
+    }        
+}
+
+function authenticateToken(req, res, next) {
+    if (req.method === 'GET') {
+        // If it's a GET request, skip token verification and move to the next middleware
+        next();
+        return;
+    }else if (req.path === '/api/v1/login') {
+        next();
+        return;
+    }
+    if (!req.headers.authorization) {
+        return res.status(403).send({ error: 'No credentials sent!' });
+    }
+    let token = req.headers.authorization;
+    token = token.split(" ")
+    try {
+        const decoded = jwt.verify(token[1], secretKey);  
+        req.user = decoded;
+        next(); 
+    } catch(err) {
+        console.log('JWT verification failed', err);
+        res.send(err)
+    }
+  }
+
+
 app.use(function (req, res, next) {
 
     
@@ -13,7 +70,7 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 
     // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type,authorization');
 
     // Set to true if you need the website to include cookies in the requests sent
     // to the API (e.g. in case you use sessions)
@@ -23,8 +80,26 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.use(cors())
+app.use(authenticateToken)
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+//API Upload Pictures
+    //Upload Picture
+    app.post('/picture', upload.single('file'), async (req, res) => {
+        const url = await uploadCloudinary(req.file.path);
 
+        if (url) {
+            return res.json({
+                message: 'Upload success',
+                url: url,
+            });
+        } else {
+            return res.json({
+                message: 'Upload failed'
+            });
+        }
+    });
 app.use(router)
 // Add headers before the routes are defined
 
