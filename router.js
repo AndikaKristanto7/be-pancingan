@@ -174,21 +174,64 @@ app.group("/api/v1",() =>{
             return res.json({code:500,message:e.message,data:null}).status(500)
         }
     })
-    
+    // kerjakan ini dibawah put
     app.put("/blog/:slug", async (req,res)=>{
-        let body = req.body;
-        const {title, slug, location, image, description} = body
-        const user = await DB.from('users').select("id").where({email:req.user.email}).first();
+    const { title, location, image, description } = req.body;
+    const userEmail = req.user.email; // Email pengguna yang sedang login
+    let slug = req.params.slug
+    try {
+        // Periksa apakah pengguna dengan alamat email tersebut ada
+        const user = await DB.from('users').select("id").where({ email: userEmail }).first();
         if (!user) {
-            throw {msg: 'User with that email not found', status: 403};
+            throw { msg: 'User with that email not found', status: 403 };
         }
-        try{
-            await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description,is_published:'N'});       
-            return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
-        }catch(e){
-            return res.json({code:500,message:e.message,data:null}).status(500)
+
+        // Periksa apakah blog dengan slug yang dimaksud ada
+        const existingBlog = await DB.from('blogs').join('users','blogs.user_id','users.id').select("email").where({ slug }).first();
+        if (!existingBlog) {
+            throw { msg: 'Blog with that slug not found', status: 404 };
         }
-    })
+
+       
+
+        // Validasi input yang diperlukan untuk pembaruan
+        if (!title || !slug || !description || !image) {
+            throw { msg: 'All fields are required', status: 400 };
+        }
+
+        // Lakukan pembaruan pada blog
+        await DB.from('blogs')
+            .where({ slug })
+            .update({ title, slug, location, image, description, is_published:'N' });
+
+        return res.status(200).json({
+            code: 200,
+            message: 'Blog updated successfully',
+            data: { slug, title, location, image, description }
+        });
+    } catch (e) {
+        return res.status(e.status || 500).json({
+            code: e.status || 500,
+            message: e.msg || e.message,
+            data: null
+        });
+    }
+});
+
+    // {
+    //     let body = req.body;
+    //     const {title, slug, location, image, description} = body
+    //     const user = await DB.from('users').select("id").where({email:req.user.email}).first();
+    //     if (!user) {
+    //         throw {msg: 'User with that email not found', status: 403};
+    //     }
+    //     try{
+    //         await DB.from('blogs').where({slug:req.params.slug}).update({title,slug,location,image,description,is_published:'N'});       
+    //         return res.json({code:200,message:'ok',data:{slug:req.params.slug,title, location, image, description}}).status(200)
+    //     }catch(e){
+    //         return res.json({code:500,message:e.message,data:null}).status(500)
+    //     }
+    // })
 
     app.put("/blog/publish/:slug", async (req,res)=>{
         let body = req.body;
