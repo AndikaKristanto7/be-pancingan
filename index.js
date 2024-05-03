@@ -1,11 +1,14 @@
 const express = require('express')
 const app = express()
 require('dotenv').config()
+const Env = require('./helpers/Env')
+const newEnv = new Env()
 const router = require('./router.js')
-const port = process.env.STATUS === 'development' ? process.env.DEV_PORT : process.env.PROD_DEV
+
+
 const jwt = require('jsonwebtoken')
 
-const secretKey = process.env.SECRET;
+const secretKey = newEnv.getEnv('SECRET') ?? 'secret';
 
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -64,7 +67,7 @@ app.use(function (req, res, next) {
 
     
     // Website you wish to allow to connect
-    res.setHeader('Access-Control-Allow-Origin', process.env.FE_URL);
+    res.setHeader('Access-Control-Allow-Origin', newEnv.getEnv('FE_URL') ?? 'http://localhost:3000');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -81,8 +84,12 @@ app.use(function (req, res, next) {
 });
 
 app.use(cors())
-app.use(authenticateToken)
 app.use(express.json())
+app.post('/test-env',(req,res)=>{
+    let key = req.body.key
+    res.send(newEnv.getEnv(key))
+})
+app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture
@@ -103,7 +110,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(router)
 // Add headers before the routes are defined
 
-
+const port = newEnv.getEnv("APP_PORT") ?? "8080"
 app.listen(port,() => {
+
     console.log(`Listening @ port ${port}`)
 })

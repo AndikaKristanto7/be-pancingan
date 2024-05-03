@@ -1,9 +1,10 @@
 var app = require("@forkjs/group-router");
 const DB = require('./services/db.js');
 const jwt = require('jsonwebtoken')
-
+const Env = require('./helpers/Env')
+const newEnv = new Env()
 // JWT
-const secretKey = process.env.SECRET;
+const secretKey = newEnv.getEnv('SECRET') ?? 'secret';
 
 app.group("/api/v1",() =>{
     async function getPublishedBlogs(offset,pageSize){
