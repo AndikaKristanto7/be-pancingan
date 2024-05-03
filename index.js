@@ -11,6 +11,7 @@ const jwt = require('jsonwebtoken')
 const secretKey = newEnv.getEnv('SECRET') ?? 'secret';
 
 const multer = require('multer');
+const multerGoogleStorage = require('multer-google-storage')
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const path = require("path");
@@ -18,7 +19,17 @@ const cors = require('cors')
 
 // const storage = multer({ dest: 'uploads/' })
 
-const upload = multer({ dest: 'uploads/' })
+const upload = multer({
+    storage:multerGoogleStorage.storageEngine({
+        autoRetry:true,
+        bucket:'vps-binar.appspot.com',
+        projectId:'vps-binar',
+        keyFilename: './vps-binar-f0b821a2bb25.json',
+        filename: (req,file,cb) => {
+            cb(null,`uploads/${Date.now()}_${file.originalname}`)
+        }
+    })
+})
 
 cloudinary.config({
     cloud_name: 'dhjpdj4ru',
@@ -30,10 +41,15 @@ async function uploadCloudinary(filePath) {
     let result;
     try {
         result = await cloudinary.uploader.upload(filePath, {use_filename: true});
-        fs.unlinkSync(filePath);
+        if(newEnv.getEnv('NODE_ENV') == "development"){
+            fs.unlinkSync(filePath);
+        }
         return result.url;
     } catch (err) {
-        fs.unlinkSync(filePath);
+        if(newEnv.getEnv('NODE_ENV') == "development"){
+            fs.unlinkSync(filePath);
+        }
+        console.log(err)
         return null;
     }        
 }
@@ -94,8 +110,7 @@ app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture
     app.post('/picture', upload.single('file'), async (req, res) => {
-        const url = await uploadCloudinary(req.file.path);
-
+        const url = await uploadCloudinary(`${newEnv.getEnv('GCP_STORAGE_BASE_URL')}/${req.file.filename}`);
         if (url) {
             return res.json({
                 message: 'Upload success',
