@@ -41,14 +41,10 @@ async function uploadCloudinary(filePath) {
     let result;
     try {
         result = await cloudinary.uploader.upload(filePath, {use_filename: true});
-        if(newEnv.getEnv('NODE_ENV') == "development"){
-            fs.unlinkSync(filePath);
-        }
+        
         return result.url;
     } catch (err) {
-        if(newEnv.getEnv('NODE_ENV') == "development"){
-            fs.unlinkSync(filePath);
-        }
+        
         console.log(err)
         return null;
     }        
