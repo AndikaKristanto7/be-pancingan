@@ -101,7 +101,7 @@ app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
     //Upload Picture
     app.post('/picture', upload.single('file'), async (req, res) => {
-        const url = await uploadCloudinary(`${newEnv.getEnv('GCP_STORAGE_BASE_URL')}/${req.file.filename}`);
+        const url = await uploadCloudinary(`${getEnv('GCP_STORAGE_BASE_URL')}/${req.file.filename}`);
         if (url) {
             return res.json({
                 message: 'Upload success',
