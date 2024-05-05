@@ -1,14 +1,12 @@
+//app.js
 const express = require('express')
 const app = express()
 require('dotenv').config()
 const Env = require('./helpers/getEnv.js')
-const newEnv = new Env()
+const {getEnv} = Env
 const router = require('./router.js')
-
-
 const jwt = require('jsonwebtoken')
-
-const secretKey = newEnv.getEnv('SECRET') ?? 'secret';
+const secretKey = getEnv('SECRET');
 
 const multer = require('multer');
 const multerGoogleStorage = require('multer-google-storage')
@@ -79,7 +77,7 @@ app.use(function (req, res, next) {
 
     
     // Website you wish to allow to connect
-    res.setHeader('Access-Control-Allow-Origin', newEnv.getEnv('FE_URL') ?? 'http://localhost:3000');
+    res.setHeader('Access-Control-Allow-Origin', getEnv('FE_URL') ?? 'http://localhost:3000');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -98,8 +96,10 @@ app.use(function (req, res, next) {
 app.use(cors())
 app.use(express.json())
 app.get("/", (req, res) => {
-  res.status(200).send("Hello World!");
+console.log(getEnv('SECRET'))
+res.status(200).send("Hello World!");
 });
+
 app.post('/test-env',(req,res)=>{
     let key = req.body.key
     res.send(newEnv.getEnv(key))
@@ -122,5 +122,9 @@ app.use(express.urlencoded({ extended: true }));
         }
     });
 app.use(router)
-// Add headers before the routes are defined
-module.exports = app
+
+app.get("/", (req, res) => {
+  res.status(200).send("Hello World!");
+});
+
+module.exports = app;

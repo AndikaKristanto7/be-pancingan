@@ -4,9 +4,8 @@
  * @type { Object.<string, import("knex").Knex.Config> }
  */
 require('dotenv').config({ path: '.env' });
-const Env = require('./helpers/Env')
-const newEnv = new Env()
-
+const Env = require('./helpers/getEnv')
+const {getEnv} = Env
 module.exports = {
   development: {
     client: 'pg',
@@ -44,7 +43,7 @@ module.exports = {
 
   production: {
     client: 'postgresql',
-    connection: newEnv.getEnv('SUPBASE_DIRECT_URL') ?? "",
+    connection: getEnv('SUPBASE_DIRECT_URL') ?? "",
     pool: {
       min: 2,
       max: 10

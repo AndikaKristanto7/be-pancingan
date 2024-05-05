@@ -1,10 +1,10 @@
 var app = require("@forkjs/group-router");
 const DB = require('./services/db.js');
 const jwt = require('jsonwebtoken')
-const Env = require('./helpers/Env')
-const newEnv = new Env()
+const Env = require('./helpers/getEnv.js')
+const {getEnv} = Env
 // JWT
-const secretKey = newEnv.getEnv('SECRET') ?? 'secret';
+const secretKey = getEnv('SECRET') ?? 'secret';
 
 app.group("/api/v1",() =>{
     async function getPublishedBlogs(offset,pageSize){
@@ -95,7 +95,7 @@ app.group("/api/v1",() =>{
             console.log(e)
             let resp = {
                 code:500,
-                //message:e.getMessage(),
+                message:e,
                 data:null
             }
             return res.json(resp).status(500);
