@@ -95,15 +95,7 @@ app.use(function (req, res, next) {
 
 app.use(cors())
 app.use(express.json())
-app.get("/", (req, res) => {
-console.log(getEnv('SECRET'))
-res.status(200).send("Hello World!");
-});
 
-app.post('/test-env',(req,res)=>{
-    let key = req.body.key
-    res.send(newEnv.getEnv(key))
-})
 app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
 //API Upload Pictures
