@@ -1,9 +1,8 @@
 var app = require("@forkjs/group-router");
-const DB = require('./services/db.js');
+const DB = require('../services/db.js');
 const jwt = require('jsonwebtoken')
-const Env = require('./helpers/getEnv.js')
+const Env = require('../helpers/getEnv.js')
 const {getEnv} = Env
-// JWT
 const secretKey = getEnv('SECRET') ?? 'secret';
 
 app.group("/api/v1",() =>{
@@ -294,7 +293,6 @@ app.group("/api/v1",() =>{
                     data: null,
                 })
         }
-
     })
 })
 
