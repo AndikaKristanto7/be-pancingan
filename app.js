@@ -15,7 +15,7 @@ function authenticateToken(req, res, next) {
         // If it's a GET request, skip token verification and move to the next middleware
         next();
         return;
-    }else if (req.path === '/api/v1/login') {
+    }else if (req.path === '/api/v1/login' || req.path === '/refresh-token') {
         next();
         return;
     }
@@ -36,6 +36,12 @@ function authenticateToken(req, res, next) {
 
 app.use(cors())
 app.use(express.json())
+app.post('/refresh-token',(req,res)=>{
+    const token = jwt.sign({email:req.body.email}, secretKey, {expiresIn: 30 * 60 })
+    return res.json({
+        token
+    }) 
+})
 app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
 app.use(router)
