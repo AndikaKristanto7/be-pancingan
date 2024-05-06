@@ -244,12 +244,11 @@ app.group("/api/v1",() =>{
                 throw {msg: 'User with that email not found', status: 403};
             }
             let getBlogWithEmail = await DB.from('blogs').join('users','blogs.user_id','users.id')
-            .where({slug:req.params.slug,email:req.user.email})
-            let getFirst = getBlogWithEmail.first()
-            if(!getFirst){
+            .where({slug:req.params.slug,email:req.user.email}).first()
+            if(!getBlogWithEmail){
                 throw {msg: 'Unauthorized!', status: 403};
             } 
-            await getBlogWithEmail.update({'deleted_at':new Date().toISOString()})
+            await DB.from('blogs').where({slug:req.params.slug}).update({'deleted_at':new Date().toISOString()})
             return res.json({code:200,message:`Blog with slug ${req.params.slug} deleted!`}).status(200)
         }catch(e){
             return res.json({message:e.message}).status(500)
