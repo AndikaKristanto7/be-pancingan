@@ -267,7 +267,7 @@ app.group("/api/v1",() =>{
             }else{
                 role = user.role
             }
-            const token =jwt.sign({email:req.body.email}, secretKey, {expiresIn: 30 * 1000 * 60 });
+            const token =jwt.sign({email:req.body.email}, secretKey, {expiresIn: 30 * 60 });
             return res.json(
                 {
                     code:200,
