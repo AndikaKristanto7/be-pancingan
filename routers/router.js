@@ -45,6 +45,7 @@ app.group("/api/v1",() =>{
                 .join('users','blogs.user_id','users.id')
                 .select(['title','slug','description','image','blogs.id'])
                 .orderBy('blogs.id','desc')
+                .whereRaw('deleted_at IS NULL')
                 .where('email',email)
                 .offset(offset)
                 .limit(pageSize);
