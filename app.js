@@ -43,7 +43,7 @@ app.post('/refresh-token',(req,res)=>{
     }) 
 })
 app.get('/',(req,res) =>{
-    res.json({message:"Hello CI/CD"}).status(200)
+    res.json({message:"Hello CI/CD Test auto deploy"}).status(200)
 })
 app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
