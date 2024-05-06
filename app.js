@@ -42,6 +42,9 @@ app.post('/refresh-token',(req,res)=>{
         token
     }) 
 })
+app.get('/',(req,res) =>{
+    res.json({message:"Hello CI/CD"}).status(200)
+})
 app.use(authenticateToken)
 app.use(express.urlencoded({ extended: true }));
 app.use(router)
